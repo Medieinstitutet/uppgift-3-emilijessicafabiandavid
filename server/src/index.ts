@@ -1,15 +1,15 @@
+// index.ts
 import express from 'express';
 import mongoose from 'mongoose';
+import subscriptionRouter from './routes/subscription.router';
 import colors from 'colors';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import session from 'express-session';
-import bodyParser from 'body-parser';
-
-import subscriptionRouter from './routes/subscription.router';
 import stripeRouter from './routes/stripe.router';
-import authRouter from './routes/auth.router';
+import authRouter from './routes/auth.router'; // Kontrollera att denna import är korrekt
+import session from 'express-session';
 import articleRouter from './routes/articles.router';
+import bodyParser from 'body-parser';
 import { handleStripeWebhook } from './controllers/webhook.controllers';
 
 dotenv.config();
@@ -44,17 +44,15 @@ app.get('/', (req, res) => {
 });
 
 app.use('/subscription', subscriptionRouter);
-app.use('/auth', authRouter);
+app.use('/auth', authRouter); // Kontrollera att denna rad finns och är korrekt
 app.use('/stripe', stripeRouter);
 app.use('/articles', articleRouter);
 
-// Stripe webhook needs the raw body
 app.post('/stripe/webhook', bodyParser.raw({ type: 'application/json' }), handleStripeWebhook);
 
 app.listen(port, () => {
   console.log(colors.rainbow(`Server is running on http://localhost:${port}`));
 });
-
 
 
 

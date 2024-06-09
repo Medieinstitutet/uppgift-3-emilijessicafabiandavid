@@ -10,7 +10,7 @@ export const Register = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedProduct = location.state?.selectedProduct;
-  const { login } = useAuth();
+  const { login } = useAuth() || {}; // Add null check for login property
 
   const [formData, setFormData] = useState<User>({
     email: "",

@@ -35,6 +35,7 @@ UserSchema.methods.matchPassword = async function (enteredPassword: string) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Hook for hashing password before saving
 UserSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
@@ -45,6 +46,7 @@ UserSchema.pre<IUser>('save', async function (next) {
   next();
 });
 
+// Hook for updating subscription's stripeId if user stripeId is modified
 UserSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('stripeId')) {
     return next();

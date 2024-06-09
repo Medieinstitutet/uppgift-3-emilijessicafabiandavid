@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/mypages.css';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext'; 
+import { AuthContextType } from '../context/AuthContext';
 
 export const MyPages = () => {
   const [subscriptionLevel, setSubscriptionLevel] = useState('');
-  const { stripeId } = useAuth();
+  const { stripeId, userId } = useAuth() as AuthContextType;
 
   useEffect(() => {
-    console.log('Stripe ID from AuthContext:', stripeId);
+    console.log("Stripe ID from AuthContext:", stripeId);
     if (!stripeId) {
       console.error('Stripe ID is missing');
       return;
@@ -25,14 +26,14 @@ export const MyPages = () => {
   }, [stripeId]);
 
   const handleUpgradeDowngrade = (level: string) => {
-    if (!stripeId) {
-      console.error('Stripe ID is missing');
+    if (!userId) {
+      console.error('User ID is missing');
       return;
     }
 
-    axios.post('http://localhost:3000/subscription', { userId: '1', subscriptionLevel: level }) 
+    axios.post('http://localhost:3000/subscription', { userId, subscriptionLevel: level }) 
       .then(response => {
-        console.log('Updated subscription level to:', level);
+        console.log('Updated subscription level to:', level); 
         setSubscriptionLevel(level);
         alert(response.data.message);
       })

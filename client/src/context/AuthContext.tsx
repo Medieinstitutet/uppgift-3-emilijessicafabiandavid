@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
-interface AuthContextType {
+export interface AuthContextType {
   userId: string | null;
   stripeId: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -9,12 +9,11 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   return useContext(AuthContext);
 };
-
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userId, setUserId] = useState<string | null>(localStorage.getItem('userId'));
@@ -31,7 +30,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', { email, password });
+      const response = await axios.post('http://localhost:3000/auth/login', { email, password });
       const { _id, stripeId } = response.data;
       console.log('Login response data:', response.data);
 
@@ -46,7 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const register = async (email: string, password: string, firstName: string, lastName: string, selectedProduct: any) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/register', { email, password, firstName, lastName, selectedProduct });
+      const response = await axios.post('http://localhost:3000/auth/register', { email, password, firstName, lastName, selectedProduct });
       const { _id, stripeId } = response.data;
       console.log('Register response data:', response.data);
 
@@ -68,12 +67,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={{ userId, stripeId, login, register, logout }}>
-         
       {children}
     </AuthContext.Provider>
   );
 };
-
 
 
 
