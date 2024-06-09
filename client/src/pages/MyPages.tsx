@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/mypages.css";
-import { useAuth } from "../context/AuthContext";
 
 export const MyPages = () => {
   const [subscriptionLevel, setSubscriptionLevel] = useState("");
-  const { stripeId } = useAuth();
+  const stripeId = localStorage.getItem("stripeId");
 
   useEffect(() => {
-    console.log("Stripe ID from AuthContext:", stripeId);
+    console.log("Stripe ID from localStorage:", stripeId);
     if (!stripeId) {
       console.error("Stripe ID is missing");
       return;
