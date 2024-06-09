@@ -1,4 +1,3 @@
-// index.ts
 import express from 'express';
 import mongoose from 'mongoose';
 import subscriptionRouter from './routes/subscription.router';
@@ -6,7 +5,7 @@ import colors from 'colors';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import stripeRouter from './routes/stripe.router';
-import authRouter from './routes/auth.router'; // Kontrollera att denna import är korrekt
+import authRouter from './routes/auth.router';
 import session from 'express-session';
 import articleRouter from './routes/articles.router';
 import bodyParser from 'body-parser';
@@ -17,7 +16,6 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -44,7 +42,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/subscription', subscriptionRouter);
-app.use('/auth', authRouter); // Kontrollera att denna rad finns och är korrekt
+app.use('/auth', authRouter);
 app.use('/stripe', stripeRouter);
 app.use('/articles', articleRouter);
 

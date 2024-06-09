@@ -4,7 +4,7 @@ import { registerUser } from "../services/api";
 import { User } from "../models/User";
 import "../styles/Auth.css";
 import alpaca from "../img/alp.png";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from '../context/AuthContext';
 
 export const Register = () => {
   const location = useLocation();
@@ -58,30 +58,21 @@ export const Register = () => {
     }
 
     try {
-      console.log(
-        "Submitting registration with selectedProduct:",
-        selectedProduct
-      );
+      console.log("Submitting registration with selectedProduct:", selectedProduct);
       const response = await registerUser(formData, selectedProduct);
       console.log("Registration successful:", response.data);
 
       setErrorMessage("");
       setSuccessMessage("Registration successful!");
 
-      // Kontrollera att response.data.url är korrekt
       console.log("Session ID:", response.data.sessionId);
       console.log("Redirect URL:", response.data.url);
 
       login(response.data); // Använd login-funktionen från AuthContext
 
-      navigate("/checkout", {
-        state: { sessionId: response.data.sessionId, url: response.data.url },
-      });
+      navigate("/checkout", { state: { sessionId: response.data.sessionId, url: response.data.url } });
     } catch (error: any) {
-      console.error(
-        "Registration failed:",
-        error.response?.data || error.message
-      );
+      console.error("Registration failed:", error.response?.data || error.message);
       setErrorMessage(error.response?.data?.message || "Registration failed");
     }
   };

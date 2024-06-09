@@ -1,15 +1,15 @@
 import axios from 'axios';
+import { User } from '../models/User';
 
 const API_URL = 'http://localhost:3000';
 
-export const registerUser = (userData: any, selectedProduct: any) => {
-  return axios.post(`${API_URL}/auth/register`, {...userData, selectedProduct });
+export const registerUser = (user: User, selectedProduct: any) => {
+  return axios.post(`${API_URL}/auth/register`, {
+    ...user,
+    selectedProduct,
+  });
 };
 
-export const loginUser = (userData: any) => {
-  return axios.post(`${API_URL}/auth/login`, userData);
-};
-
-export const logoutUser = () => {
-  return axios.post(`${API_URL}/auth/logout`);
+export const loginUser = (credentials: { email: string; password: string }) => {
+  return axios.post(`${API_URL}/auth/login`, credentials);
 };

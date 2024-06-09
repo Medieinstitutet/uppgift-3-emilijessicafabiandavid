@@ -6,18 +6,18 @@ export interface ISubscription extends Document {
   startDate: Date;
   endDate: Date;
   nextBillingDate: Date;
-  stripeId: string; 
+  sessionId: string; // Replace stripeId with sessionId
 }
 
-const SubscriptionSchema: Schema = new Schema({
+const SubscriptionSchema: Schema<ISubscription> = new Schema({
   userId: { type: String, required: true },
-  level: { type: String, required: true, enum: ['News Site', 'Digital', 'Digital & Paper'] },
+  level: { type: String, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   nextBillingDate: { type: Date, required: true },
-  stripeId: { type: String, required: true }, // Lägg till stripeId-fältet här
+  sessionId: { type: String, required: true }, // Use sessionId instead of stripeId
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 export default mongoose.model<ISubscription>('Subscription', SubscriptionSchema);

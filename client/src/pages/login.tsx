@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { User } from "../models/User";
 import "../styles/Auth.css";
 import alpaca from "../img/alp.png";
+import { useAuth } from '../context/AuthContext';
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { Login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -16,7 +17,9 @@ export const Login = () => {
 
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -31,8 +34,7 @@ export const Login = () => {
       console.log("Login successful:", response.data);
 
       setErrorMessage("");
-      login(response.data); // Använd login-funktionen från AuthContext
-      console.log("User logged in:", response.data);
+      Login(response.data); // Använd login-funktionen från AuthContext
 
       navigate("/mypages");
     } catch (error: any) {

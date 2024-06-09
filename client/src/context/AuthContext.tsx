@@ -1,23 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-import { logoutUser } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 
-interface User {
-  _id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  subscriptionId?: string;
-  role: string;
-  stripeId?: string;
-}
-
-interface IAuthContext {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (user: User) => void;
+export interface AuthContextType {
+  userId: string | null;
+  sessionId: string | null; // Rename stripeId to sessionId
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, firstName: string, lastName: string, selectedProduct: any) => Promise<void>;
   logout: () => void;
-  stripeId: string | null;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,48 +15,44 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-  const login = (user: User) => {
-    setUser(user);
-    console.log("User logged in with stripeId:", user.stripeId);
-  };
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [userId, setUserId] = useState<string | null>(localStorage.getItem('userId'));
+  const [sessionId, setSessionId] = useState<string | null>(localStorage.getItem('sessionId'));
 
   useEffect(() => {
     console.log('Saving to localStorage:');
     console.log('userId:', userId);
-    console.log('stripeId:', stripeId);
+    console.log('sessionId:', sessionId);
 
     localStorage.setItem('userId', userId || '');
-    localStorage.setItem('stripeId', stripeId || '');
-  }, [userId, stripeId]);
+    localStorage.setItem('sessionId', sessionId || '');
+  }, [userId, sessionId]);
 
   const login = async (email: string, password: string) => {
     try {
       const response = await axios.post('http://localhost:3000/auth/login', { email, password });
-      const { _id, stripeId } = response.data;
+      const { _id, sessionId } = response.data;
       console.log('Login response data:', response.data);
 
-      if (response.status === 200) {
-        setUser(null);
-        console.log("User logged out");
-        navigate("/");
-      } else {
-        console.error("Logout failed with status:", response.status);
-      }
+      setUserId(_id);
+      setSessionId(sessionId);
+      console.log('User ID:', _id);
+      console.log('Session ID:', sessionId);
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Error during login:', error);
     }
   };
 
   const register = async (email: string, password: string, firstName: string, lastName: string, selectedProduct: any) => {
     try {
       const response = await axios.post('http://localhost:3000/auth/register', { email, password, firstName, lastName, selectedProduct });
-      const { _id, stripeId } = response.data;
+      const { _id, sessionId } = response.data;
       console.log('Register response data:', response.data);
 
       setUserId(_id);
-      setStripeId(stripeId);
+      setSessionId(sessionId);
       console.log('User ID:', _id);
-      console.log('Stripe ID:', stripeId);
+      console.log('Session ID:', sessionId);
     } catch (error) {
       console.error('Error during registration:', error);
     }
@@ -75,29 +60,14 @@ export const useAuth = () => {
 
   const logout = () => {
     setUserId(null);
-    setStripeId(null);
+    setSessionId(null);
     localStorage.removeItem('userId');
-    localStorage.removeItem('stripeId');
+    localStorage.removeItem('sessionId');
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        stripeId: user?.stripeId || null,
-      }}>
+    <AuthContext.Provider value={{ userId, sessionId, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };

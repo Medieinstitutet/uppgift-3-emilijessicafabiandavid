@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
+import fs from 'fs/promises';
+import path from 'path';
 import dotenv from 'dotenv';
 import Subscription from '../models/Subscription';
-import Level from '../models/Level';
-import User from '../models/User';
 import { getAllProducts } from './articles.controllers';
-import path from 'path';
-import fs from 'fs/promises';
+import User from '../models/User';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -43,7 +43,6 @@ const createSubscription = async (customerId: string, priceId: string): Promise<
 const getSubscriptions = async (req: Request, res: Response): Promise<void> => {
   try {
     const productsWithPrices = await getAllProducts();
-    console.log('Fetched products with prices:', productsWithPrices);
     res.status(200).json(productsWithPrices);
   } catch (error) {
     console.error('Error fetching subscriptions:', error);
@@ -83,45 +82,29 @@ const createCheckoutSession = async (req: Request, res: Response): Promise<void>
     console.log("Stripe Checkout Session Created:", session.id);
     console.log("Stripe Checkout Session URL:", session.url);
 
-    const user = await User.findById((req.session as any).user._id);
-    if (!user) {
-      res.status(400).json({ error: 'User not found' });
-      return;
+    const user = await User.findById((req.session as any).userId);
+    if (user) {
+      console.log("Found user:", user);
+      user.sessionId = session.id;
+      console.log("Updating user document with sessionId:", user.sessionId);
+      try {
+        await user.save();
+        console.log("User document saved successfully!");
+      } catch (err) {
+        console.error("Error saving user document:", err);
+      }
     }
-
-    console.log("Found user:", user);
-    user.stripeId = session.id;
-    console.log("Updating user document with stripeId:", user.stripeId);
-    try {
-      await user.save();
-      console.log("User document saved successfully!");
-    } catch (err) {
-      console.error("Error saving user document:", err);
-    }
-
-    const level = await Level.findOne({ name: selectedProduct.name });
-    if (!level) {
-      res.status(400).json({ error: 'Level not found' });
-      return;
-    }
-
-    console.log("Found level:", level);
 
     const newSubscription = new Subscription({
-      userId: user._id.toString(),
+      userId: (req.session as any).userId,
       level: selectedProduct.name,
       startDate: new Date(),
       endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       nextBillingDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-      stripeId: session.id,
+      sessionId: session.id, // Save sessionId instead of stripeId
     });
     console.log("Creating new Subscription document:", newSubscription);
     await newSubscription.save();
-    console.log("New Subscription document saved:", newSubscription);
-
-    user.subscriptionId = (newSubscription._id as string).toString();
-    await user.save();
-    console.log("Updated user with new subscriptionId:", user);
 
     res.json({ sessionId: session.id, url: session.url });
   } catch (error) {
@@ -133,18 +116,11 @@ const createCheckoutSession = async (req: Request, res: Response): Promise<void>
 const verifySession = async (req: Request, res: Response): Promise<void> => {
   try {
     const sessionId = req.body.sessionId || req.query.sessionId;
-    if (!sessionId) {
-      res.status(400).send('Session ID is required');
-      return;
-    }
-
     console.log("Verifying session:", sessionId);
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status === 'paid') {
-      console.log("Session payment status is 'paid'");
       const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
-      console.log("Line items from session:", lineItems.data);
       const order = {
         orderNumber: Math.floor(Math.random() * 100000000),
         customerName: session.customer_details?.name,
@@ -154,45 +130,32 @@ const verifySession = async (req: Request, res: Response): Promise<void> => {
       };
 
       const ordersFilePath = path.join(__dirname, '..', 'data', 'orders.json');
-      let orders = [];
-      try {
-        const ordersData = await fs.readFile(ordersFilePath, 'utf-8');
-        orders = JSON.parse(ordersData);
-      } catch (err) {
-        console.error('Error reading orders file:', err);
-      }
+      const orders = JSON.parse(await fs.readFile(ordersFilePath, 'utf-8'));
       orders.push(order);
       await fs.writeFile(ordersFilePath, JSON.stringify(orders, null, 4));
-      console.log("Order saved:", order);
 
-      let subscription = await Subscription.findOne({ stripeId: sessionId });
+      const subscription = await Subscription.findOne({ sessionId });
       if (!subscription) {
-        const user = await User.findById((req.session as any).user._id);
-        if (!user) {
-          res.status(400).json({ error: 'User not found' });
-          return;
-        }
-
-        subscription = new Subscription({
-          userId: user._id.toString(),
+        const newSubscription = new Subscription({
+          userId: (req.session as any).userId,
           level: session.metadata?.subscriptionLevel,
           startDate: new Date(),
           endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
           nextBillingDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-          stripeId: sessionId,
+          sessionId,
         });
 
-        await subscription.save();
-        console.log("New Subscription document created:", subscription);
+        await newSubscription.save();
 
-        user.subscriptionId = subscription._id as string;
-        await user.save();
-        console.log("Updated user with new subscriptionId:", user);
+        const user = await User.findById((req.session as any).userId);
+        if (user) {
+          user.subscriptionId = (newSubscription._id as mongoose.Types.ObjectId).toString();
+          await user.save();
+        }
       }
 
       res.status(200).json({ verified: true });
     } else {
-      console.log("Session payment status is not 'paid'");
       res.status(200).json({ verified: false });
     }
   } catch (error) {
@@ -208,12 +171,11 @@ const updateSubscriptionFromStripeEvent = async (req: Request, res: Response): P
     if (eventType === 'invoice.payment_succeeded' && eventData && eventData.subscription) {
       const subscriptionId = eventData.subscription as string;
 
-      console.log("Updating subscription from Stripe event:", subscriptionId);
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const nextBillingDate = new Date(subscription.current_period_end * 1000);
 
       const updatedSubscription = await Subscription.findOneAndUpdate(
-        { stripeId: subscriptionId },
+        { sessionId: subscriptionId },
         { nextBillingDate },
         { new: true }
       );

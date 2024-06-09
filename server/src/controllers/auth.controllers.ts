@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import { Session, SessionData } from 'express-session';
 import { stripe } from './stripe.controllers';
@@ -16,10 +17,9 @@ export const registerUser = async (req: CustomRequest, res: Response, next: Next
     res.status(400).json({ message: 'User already exists' });
     return;
   }
-  const hashedPassword = await bcrypt.hash(password, 10);
   const user = new User({
     email,
-    password: hashedPassword,
+    password,
     firstName,
     lastName,
     subscriptionId,
@@ -52,7 +52,7 @@ export const registerUser = async (req: CustomRequest, res: Response, next: Next
     });
 
     console.log("Stripe Checkout Session Created:", session.id);
-    user.stripeId = session.id; // Spara sessionId i användardokumentet
+    user.sessionId = session.id; // Save sessionId in user document
     await user.save();
 
     res.status(201).json({
@@ -62,8 +62,7 @@ export const registerUser = async (req: CustomRequest, res: Response, next: Next
       lastName: user.lastName,
       subscriptionId: user.subscriptionId,
       role: user.role,
-      stripeId: user.stripeId, // Lägg till stripeId här
-      sessionId: session.id,
+      sessionId: user.sessionId,
       url: session.url,
     });
   } catch (error) {
@@ -75,35 +74,22 @@ export const registerUser = async (req: CustomRequest, res: Response, next: Next
 export const loginUser = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   const { email, password } = req.body;
 
-  try {
-    const user = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
-    if (!user) {
-      res.status(401).json({ message: 'Invalid email or password' });
-      return;
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Password match:', isMatch);
-
-    if (user && isMatch) {
-      req.session.userId = user._id.toString();
-      console.log('Login user:', user);
-      res.json({
-        _id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        subscriptionId: user.subscriptionId,
-        role: user.role,
-        stripeId: user.stripeId, // Lägg till stripeId här
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
-    }
-  } catch (error) {
-    console.error('Error during user login:', error);
-    next(error);
+  if (user && (await user.matchPassword(password))) {
+    req.session.userId = user._id.toString();
+    console.log('Login user:', user);
+    res.json({
+      _id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      subscriptionId: user.subscriptionId,
+      role: user.role,
+      sessionId: user.sessionId, // Return sessionId instead of stripeId
+    });
+  } else {
+    res.status(401).json({ message: 'Invalid email or password' });
   }
 };
 
