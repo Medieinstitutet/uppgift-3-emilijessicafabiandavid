@@ -8,7 +8,7 @@ export const MyPages = () => {
   const { stripeId } = useAuth();
 
   useEffect(() => {
-    console.log("Stripe ID from AuthContext:", stripeId);
+    console.log('Stripe ID from AuthContext:', stripeId);
     if (!stripeId) {
       console.error('Stripe ID is missing');
       return;
@@ -17,7 +17,7 @@ export const MyPages = () => {
     axios.get('http://localhost:3000/subscription/session', { params: { sessionId: stripeId } })
       .then(response => {
         console.log('Response from server:', response.data);
-        setSubscriptionLevel(response.data.subscriptionLevel); // Assuming the response has a 'subscriptionLevel' field
+        setSubscriptionLevel(response.data.subscriptionLevel);
       })
       .catch(error => {
         console.error('There was an error fetching the subscription level!', error);
@@ -30,7 +30,7 @@ export const MyPages = () => {
       return;
     }
 
-    axios.post('http://localhost:3000/subscription', { stripeId, subscriptionLevel: level })
+    axios.post('http://localhost:3000/subscription', { userId: '1', subscriptionLevel: level }) 
       .then(response => {
         console.log('Updated subscription level to:', level);
         setSubscriptionLevel(level);
@@ -72,6 +72,7 @@ export const MyPages = () => {
 };
 
 export default MyPages;
+
 
 
 

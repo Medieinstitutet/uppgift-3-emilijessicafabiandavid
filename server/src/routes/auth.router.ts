@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import express from 'express';
 import { registerUser, loginUser, logoutUser } from '../controllers/auth.controllers';
 
-const router = Router();
+const authRouter = express.Router();
 
-router.post('/register', registerUser as any);
-router.post('/login', loginUser as any);
-router.post('/logout', logoutUser as any);
+authRouter.post('/register', registerUser);
+authRouter.post('/login', loginUser);  // Se till att denna rad finns
+authRouter.post('/logout', logoutUser);
 
-export default router;
+export default authRouter;

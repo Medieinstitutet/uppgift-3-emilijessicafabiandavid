@@ -79,6 +79,7 @@ export const loginUser = async (req: CustomRequest, res: Response, next: NextFun
 
   if (user && (await user.matchPassword(password))) {
     req.session.userId = user._id.toString();
+    console.log('Login user:', user);
     res.json({
       _id: user._id,
       email: user.email,
@@ -102,6 +103,7 @@ export const logoutUser = (req: CustomRequest, res: Response): void => {
     }
   });
 };
+
 
 
 
