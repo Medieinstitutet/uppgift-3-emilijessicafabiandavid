@@ -3,23 +3,25 @@ import axios from "axios";
 import "../styles/mypages.css";
 
 export const MyPages = () => {
+  const { sessionId } = useAuth();
   const [subscriptionLevel, setSubscriptionLevel] = useState("");
-  const sessionId = localStorage.getItem("sessionId");
 
   useEffect(() => {
-    console.log("Session ID from localStorage:", sessionId);
-    if (!sessionId) {
+    const storedSessionId =
+      sessionId || localStorage.getItem("stripeSessionId");
+    console.log("Session ID from localStorage:", storedSessionId);
+    if (!storedSessionId) {
       console.error("Session ID is missing");
       return;
     }
 
     axios
       .get("http://localhost:3000/subscription/session", {
-        params: { sessionId },
+        params: { sessionId: storedSessionId },
       })
       .then((response) => {
         console.log("Response from server:", response.data);
-        setSubscriptionLevel(response.data.subscriptionLevel); // Assuming the response has a 'subscriptionLevel' field
+        setSubscriptionLevel(response.data.subscriptionLevel);
       })
       .catch((error) => {
         console.error(
@@ -30,14 +32,16 @@ export const MyPages = () => {
   }, [sessionId]);
 
   const handleUpgradeDowngrade = (level: string) => {
-    if (!sessionId) {
+    const storedSessionId =
+      sessionId || localStorage.getItem("stripeSessionId");
+    if (!storedSessionId) {
       console.error("Session ID is missing");
       return;
     }
 
     axios
       .post("http://localhost:3000/subscription", {
-        sessionId,
+        sessionId: storedSessionId,
         subscriptionLevel: level,
       })
       .then((response) => {
