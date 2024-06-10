@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import { Session, SessionData } from 'express-session';
 import { stripe } from './stripe.controllers';
+import Subscription from '../models/Subscription';
 
 interface CustomRequest extends Request {
   session: Session & Partial<SessionData> & {
@@ -51,8 +53,19 @@ export const registerUser = async (req: CustomRequest, res: Response, next: Next
     });
 
     console.log("Stripe Checkout Session Created:", session.id);
-    user.stripeId = session.id; // Spara sessionId i användardokumentet
+    user.sessionId = session.id; // Save sessionId in user document
     await user.save();
+
+    const subscription = new Subscription({
+      userId: user._id,
+      level: req.body.selectedProduct.name,
+      startDate: new Date(),
+      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      nextBillingDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+      sessionId: session.id,
+    });
+
+    await subscription.save();
 
     res.status(201).json({
       _id: user._id,
@@ -61,8 +74,7 @@ export const registerUser = async (req: CustomRequest, res: Response, next: Next
       lastName: user.lastName,
       subscriptionId: user.subscriptionId,
       role: user.role,
-      stripeId: user.stripeId, // Lägg till stripeId här
-      sessionId: session.id,
+      sessionId: user.sessionId,
       url: session.url,
     });
   } catch (error) {
@@ -78,6 +90,7 @@ export const loginUser = async (req: CustomRequest, res: Response, next: NextFun
 
   if (user && (await user.matchPassword(password))) {
     req.session.userId = user._id.toString();
+    console.log('Login user:', user);
     res.json({
       _id: user._id,
       email: user.email,
@@ -85,7 +98,7 @@ export const loginUser = async (req: CustomRequest, res: Response, next: NextFun
       lastName: user.lastName,
       subscriptionId: user.subscriptionId,
       role: user.role,
-      stripeId: user.stripeId, // Lägg till stripeId här
+      sessionId: user.sessionId, // Return sessionId
     });
   } else {
     res.status(401).json({ message: 'Invalid email or password' });

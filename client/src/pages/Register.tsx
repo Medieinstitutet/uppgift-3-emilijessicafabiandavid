@@ -73,6 +73,8 @@ export const Register = () => {
       console.log("Redirect URL:", response.data.url);
 
       login(response.data); // Använd login-funktionen från AuthContext
+consol.log("User logged in with stripeId:", response.data.stripeId);
+consol.log(  "Session ID still ", response.data.sessionId  );
 
       navigate("/checkout", {
         state: { sessionId: response.data.sessionId, url: response.data.url },

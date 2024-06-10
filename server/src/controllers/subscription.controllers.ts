@@ -60,33 +60,19 @@ export const updateUserSubscription = async (req: Request, res: Response) => {
 // Ny funktion för att hämta prenumeration baserat på sessionId
 export const getSubscriptionBySessionId = async (req: Request, res: Response) => {
   const { sessionId } = req.query;
-  if (!sessionId) {
-    res.status(400).json({ error: 'Session ID is required' });
-    return;
-  }
-
   try {
-    console.log('Fetching user with sessionId:', sessionId);
-    const user = await User.findOne({ stripeId: sessionId });
-
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
-      return;
+    const subscription = await Subscription.findOne({ sessionId });
+    if (subscription) {
+      res.json(subscription);
+    } else {
+      res.status(404).json({ message: 'Subscription not found' });
     }
-
-    console.log('User found:', user);
-    const subscription = await Subscription.findOne({ userId: user._id });
-
-    if (!subscription) {
-      res.status(404).json({ error: 'Subscription not found' });
-      return;
-    }
-
-    console.log('Subscription found:', subscription);
-    res.json({ subscriptionLevel: subscription.level });
   } catch (error) {
-    console.error('Error fetching subscription by session ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    if (error instanceof Error) {
+      res.status(500).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: 'Unknown error' });
+    }
   }
 };
 

@@ -4,18 +4,18 @@ import "../styles/mypages.css";
 
 export const MyPages = () => {
   const [subscriptionLevel, setSubscriptionLevel] = useState("");
-  const stripeId = localStorage.getItem("stripeId");
+  const sessionId = localStorage.getItem("sessionId");
 
   useEffect(() => {
-    console.log("Stripe ID from localStorage:", stripeId);
-    if (!stripeId) {
-      console.error("Stripe ID is missing");
+    console.log("Session ID from localStorage:", sessionId);
+    if (!sessionId) {
+      console.error("Session ID is missing");
       return;
     }
 
     axios
       .get("http://localhost:3000/subscription/session", {
-        params: { sessionId: stripeId },
+        params: { sessionId },
       })
       .then((response) => {
         console.log("Response from server:", response.data);
@@ -27,17 +27,17 @@ export const MyPages = () => {
           error
         );
       });
-  }, [stripeId]);
+  }, [sessionId]);
 
   const handleUpgradeDowngrade = (level: string) => {
-    if (!stripeId) {
-      console.error("Stripe ID is missing");
+    if (!sessionId) {
+      console.error("Session ID is missing");
       return;
     }
 
     axios
       .post("http://localhost:3000/subscription", {
-        stripeId,
+        sessionId,
         subscriptionLevel: level,
       })
       .then((response) => {
