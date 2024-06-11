@@ -77,8 +77,12 @@ export const Register = () => {
       console.log("Redirect URL:", response.data.url);
 
       login(response.data, response.data.sessionId);
+      console.log(response.data.user);
+      console.log(response.data.sessionId);
       localStorage.setItem("stripeSessionId", response.data.sessionId);
       localStorage.setItem("user", JSON.stringify(response.data.user)); // Spara användarobjektet som sträng
+
+      console.log("Redirecting to checkout page...");
 
       navigate("/checkout", {
         state: { session_id: response.data.session_id, url: response.data.url },
