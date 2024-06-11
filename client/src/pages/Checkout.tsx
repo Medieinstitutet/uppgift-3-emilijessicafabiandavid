@@ -7,7 +7,8 @@ export const Checkout = () => {
   const url = location.state?.url;
 
   useEffect(() => {
-    if (!sessionId || !url) {
+    const stripeSessionId = localStorage.getItem("stripeSessionId");
+    if (!stripeSessionId || !url) {
       console.error("No session ID or URL found");
       return;
     }
