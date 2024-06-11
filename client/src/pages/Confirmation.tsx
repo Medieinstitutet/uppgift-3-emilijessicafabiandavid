@@ -3,15 +3,13 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { User } from "../models/User"; // Importera User-gränssnittet
-
-// betalning gck ej igenom kunden kommer till mypages och här finns möjlghet att göra betalningen igen
-
+ 
 export const Confirmation = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [status, setStatus] = useState<string>("");
   const [email, setEmail] = useState<string>("");
-
+ 
   useEffect(() => {
     console.log("useEffect verified payment");
     const verifyPayment = async () => {
@@ -19,13 +17,13 @@ export const Confirmation = () => {
       const userString = localStorage.getItem("user");
       console.log("verifyPayment called");
       console.log("sessionId:", sessionId);
-
+ 
       if (!sessionId) {
         console.log("Session ID saknas.");
         setStatus("Session ID saknas.");
         return;
       }
-
+ 
       let userId: string | null = null;
       let subscriptionId: string | null = null;
       if (userString) {
@@ -39,7 +37,7 @@ export const Confirmation = () => {
           return;
         }
       }
-
+ 
       try {
         const response = await axios.post(
           "http://localhost:3000/stripe/verify-session",
@@ -47,15 +45,20 @@ export const Confirmation = () => {
           { withCredentials: true }
         );
         console.log("Response from verify-session:", response.data);
-
+ 
         if (response.data.verified) {
           setStatus("Betalningen gick igenom! Tack för ditt köp!");
           setEmail(response.data.email);
-
-          //härifrån kan vi få subId endpoint för att hämta subid
-          // Logga in användaren och spara sessionId
-          if (userId && sessionId) {
-            login({ ...response.data.user, subscriptionId }, sessionId);
+ 
+          // Logga in användaren och spara sessionId och subscriptionId
+          if (userId && sessionId && response.data.subscriptionId) {
+            login(
+              {
+                ...response.data.user,
+                subscriptionId: response.data.subscriptionId,
+              },
+              sessionId
+            );
           }
         } else {
           setStatus("Köpet gick inte igenom. Försök igen.");
@@ -65,14 +68,14 @@ export const Confirmation = () => {
         setStatus("Ett fel inträffade vid verifieringen av betalningen.");
       }
     };
-
+ 
     verifyPayment();
   }, []);
-
+ 
   const handleRedirect = (path: string) => {
     navigate(path);
   };
-
+ 
   return (
     <div>
       <h1>Betalningsstatus</h1>
@@ -92,5 +95,5 @@ export const Confirmation = () => {
     </div>
   );
 };
-
+ 
 export default Confirmation;

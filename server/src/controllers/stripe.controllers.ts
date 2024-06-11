@@ -135,22 +135,22 @@ const verifySession = async (req: Request, res: Response): Promise<void> => {
   try {
     const sessionId = req.body.sessionId || req.query.sessionId;
     console.log("Received sessionId:", sessionId);
-
+ 
     if (!sessionId) {
       console.log("No sessionId provided");
       res.status(400).send('Session ID is required');
       return;
     }
-
+ 
     console.log("Verifying session with Stripe:", sessionId);
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     console.log("Stripe session retrieved:", session);
-
+ 
     if (session.payment_status === 'paid') {
       console.log("Session payment status is 'paid'");
       const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
       console.log("Line items from session:", lineItems.data);
-
+ 
       let subscription = await Subscription.findOne({ stripeId: sessionId });
       if (!subscription) {
         console.log("No existing subscription found, creating new subscription");
@@ -161,14 +161,14 @@ const verifySession = async (req: Request, res: Response): Promise<void> => {
           res.status(400).send('User ID or Subscription Level is missing in session metadata');
           return;
         }
-
+ 
         const user: IUser | null = await User.findById(userId);
         if (!user) {
           console.log("User not found for session userId:", userId);
           res.status(400).json({ error: 'User not found' });
           return;
         }
-
+ 
         console.log("Found user:", user);
         subscription = new Subscription({
           userId: user._id.toString(),
@@ -177,16 +177,19 @@ const verifySession = async (req: Request, res: Response): Promise<void> => {
           endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
           nextBillingDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
           stripeId: sessionId,
+          status: 'active', // Sätt status till 'active' vid skapandet
         });
-
+ 
         await subscription.save();
         console.log("New Subscription document created:", subscription);
-
+ 
         user.subscriptionId = subscription._id as string;
         await user.save();
         console.log("Updated user with new subscriptionId:", user);
+      } else {
+        console.log("Existing subscription found:", subscription);
       }
-
+ 
       // Kontrollera om betalningen redan existerar för att undvika duplicering
       const existingPayment = await Payment.findOne({ stripeId: sessionId });
       if (!existingPayment) {
@@ -199,14 +202,19 @@ const verifySession = async (req: Request, res: Response): Promise<void> => {
           status: 'paid',
           stripeId: sessionId,
         });
-console.log("create new payment------------------------");
+        console.log("Creating new Payment document:", payment);
         await payment.save();
         console.log("Payment document created:", payment);
       } else {
         console.log("Payment document already exists for session:", sessionId);
       }
-
-      res.status(200).json({ verified: true, stripeId: sessionId, subscriptionLevel: subscription.level });
+ 
+      res.status(200).json({
+        verified: true,
+        stripeId: sessionId,
+        subscriptionLevel: subscription.level,
+        subscriptionId: subscription._id
+      });
     } else {
       console.log("Session payment status is not 'paid'");
       res.status(200).json({ verified: false });
