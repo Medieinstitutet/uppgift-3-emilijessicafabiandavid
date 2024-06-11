@@ -66,6 +66,8 @@ export const Confirmation = () => {
     verifyPayment();
   }, []);
 
+  //tjoho
+
   const handleRedirect = (path: string) => {
     navigate(path);
   };
