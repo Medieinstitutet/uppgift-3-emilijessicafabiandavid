@@ -47,14 +47,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, stripeSessionId]);
 
-  // const login = (user: User, stripeId: string) => {
-  //   setUser(user);
-  //   setStripeSessionId(stripeId);
-  //   console.log("User logged in:", user);
-  //   console.log("Stripe Session ID:", stripeSessionId);
-  //   localStorage.setItem("user", JSON.stringify(user));
-  //   localStorage.setItem("stripeSessionId", stripeId);
-  // };
+  const login = (user: User, stripeId: string) => {
+    setUser(user);
+    setStripeSessionId(stripeId);
+    console.log("User logged in:", user);
+    console.log("Stripe Session ID:", stripeSessionId);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("stripeSessionId", stripeId);
+  };
 
   const login = (user: User, stripeId: string) => {
     const isAuthenticated = !!stripeId && !!user;
