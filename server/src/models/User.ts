@@ -19,7 +19,6 @@ export interface IUser extends Document {
 
 const UserSchema: Schema<IUser> = new Schema({
   subscriptionId: { type: String },
-  subscription: { type: Schema.Types.ObjectId, ref: 'Subscription' }, // Add a subscription field to store the associated Subscription document
   email: { type: String, required: true, unique: true },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },

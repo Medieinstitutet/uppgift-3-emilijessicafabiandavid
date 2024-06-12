@@ -188,7 +188,7 @@ const verifySession = async (req: Request, res: Response): Promise<void> => {
         await subscription.save();
         console.log("New Subscription document created:", subscription);
 
-        user.subscriptionId = subscription._id as string;
+        user.subscriptionId = subscription._id as string; //skapar subId
         await user.save();
         console.log("Updated user with new subscriptionId:", user);
       } else {

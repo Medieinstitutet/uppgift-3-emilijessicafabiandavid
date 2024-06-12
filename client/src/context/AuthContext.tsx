@@ -54,13 +54,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user && stripeSessionId) {
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...user, stripeSessionId })
+      );
       localStorage.setItem("stripeSessionId", stripeSessionId);
     }
   }, [user, stripeSessionId]);
 
   const login = (user: User, stripeSessionId: string, stripeSubId: string) => {
-    setUser({ ...user, stripeSubId }); // Uppdatera användardata med stripeSubId
+    setUser({ ...user, stripeSubId }); // Uppdatera användardata med stripeSubId //
     setStripeSessionId(stripeSessionId);
     console.log("User logged in:", user);
     console.log("Stripe Session ID:", stripeSessionId);
