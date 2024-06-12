@@ -44,3 +44,17 @@
     background-color: #0056b3;
   }
   
+  .mypages-button.cancel-button {
+    background-color: red;
+    color: white;
+  }
+
+  .subscription-message {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #3abee3;
+    border-radius: 5px;
+    color: #333;
+  }
+  
