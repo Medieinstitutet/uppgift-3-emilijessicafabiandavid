@@ -1,19 +1,15 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Auth.css";
-import alpaca from "../img/alp.png";
 
 export const Login = () => {
-  const navigate = useNavigate();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  //en liten kommentar
 
   const [errorMessage, setErrorMessage] = useState<string>("");
 
@@ -32,14 +28,19 @@ export const Login = () => {
       console.log("Login successful:", response.data);
 
       setErrorMessage("");
-      login(
-        response.data,
-        response.data.stripeSessionId,
-        response.data.stripeSubId
-      ); // Skicka sessionId och stripeSubId när användaren loggar in
+      login(response.data, response.data.stripeId, response.data.stripeSubId); // Skicka sessionId och stripeSubId när användaren loggar in
       console.log("User logged in:", response.data);
+      // localStorage.setItem("stripeSessionId", response.data.stripeSessionId);
+      // localStorage.setItem("stripeSubId", response.data.stripeSubId);
+      // localStorage.setItem("userId", response.data._id);
+      // localStorage.setItem("email", response.data.email);
+      // localStorage.setItem("role", response.data.role);
+      // localStorage.setItem("firstName", response.data.firstName);
+      // localStorage.setItem("lastName", response.data.lastName);
+      // localStorage.setItem("stripeId", response.data.stripeId);
+      // localStorage.setItem("sessionId", response.data.sessionId);
 
-      navigate("/mypages");
+      document.location.href = "/mypages";
     } catch (error: any) {
       console.error("Login failed:", error.response?.data || error.message);
       setErrorMessage(error.response?.data?.message || "Login failed");
@@ -48,7 +49,6 @@ export const Login = () => {
 
   return (
     <div className="container">
-      <img className="alpaca-img" src={alpaca} alt="alpaca" />
       <div className="login-container">
         <h1>Login</h1>
         {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
